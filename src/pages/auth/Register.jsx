@@ -1,42 +1,63 @@
 import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { authService } from '../../services/authService';
 import toast from 'react-hot-toast';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const Register = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  const from = location.state?.from?.pathname || '/';
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const validatePassword = (password) => {
+    const hasMinLength = password.length >= 8;
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    return hasMinLength && hasSpecialChar;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error('Completa todos los campos');
+    if (!formData.name || !formData.email || !formData.password) {
+      toast.error('Completa todos los campos obligatorios');
+      return;
+    }
+
+    if (!validatePassword(formData.password)) {
+      toast.error('La contraseña debe tener mínimo 8 caracteres y un carácter especial');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
       return;
     }
     
     setIsLoading(true);
     
     try {
-      const user = await login(email, password);
-      toast.success(`¡Bienvenido, ${user.name}!`);
+      await authService.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: 'CLIENTE',
+      });
       
-      const redirectPath = {
-        ADMIN: '/admin/dashboard',
-        TECNICO: '/tecnico/dashboard',
-        CLIENTE: '/cliente/tracking',
-      };
-      navigate(redirectPath[user.role] || from, { replace: true });
+      toast.success('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión');
+      navigate('/login');
     } catch (error) {
-      // Error ya manejado por interceptor
+      // Error manejado por interceptor
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +65,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
-      {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-sky-900/20 via-slate-900 to-slate-900" />
       
       <div className="relative w-full max-w-md">
@@ -54,12 +74,33 @@ const Login = () => {
             <span className="text-2xl font-bold text-white">TF</span>
           </div>
           <h1 className="text-3xl font-bold text-white">TechFlow</h1>
-          <p className="text-slate-400 mt-2">Sistema de Gestión de Taller</p>
+          <p className="text-slate-400 mt-2">Crear cuenta de cliente</p>
         </div>
         
         {/* Card */}
         <div className="bg-slate-800 rounded-2xl border border-slate-700 p-8 shadow-xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Nombre */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Nombre completo
+              </label>
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                  placeholder="Juan Pérez"
+                  autoComplete="name"
+                />
+              </div>
+            </div>
+
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -71,10 +112,11 @@ const Login = () => {
                 </svg>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                  placeholder="usuario@techflow.com"
+                  placeholder="correo@ejemplo.com"
                   autoComplete="email"
                 />
               </div>
@@ -91,11 +133,12 @@ const Login = () => {
                 </svg>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   className="w-full pl-12 pr-12 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -114,45 +157,58 @@ const Login = () => {
                   )}
                 </button>
               </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Mínimo 8 caracteres y un carácter especial (!@#$%...)
+              </p>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Confirmar contraseña
+              </label>
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                />
+              </div>
             </div>
             
             {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 mt-6"
             >
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Ingresando...
+                  Creando cuenta...
                 </>
               ) : (
-                'Iniciar Sesión'
+                'Crear Cuenta'
               )}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-slate-800 text-slate-500">o</span>
-            </div>
+          {/* Link to login */}
+          <div className="mt-6 text-center">
+            <p className="text-slate-400">
+              ¿Ya tienes cuenta?{' '}
+              <Link to="/login" className="text-sky-400 hover:text-sky-300 font-medium">
+                Iniciar Sesión
+              </Link>
+            </p>
           </div>
-
-          {/* Register link */}
-          <Link
-            to="/register"
-            className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-            Crear cuenta nueva
-          </Link>
         </div>
         
         {/* Footer */}
@@ -164,4 +220,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;

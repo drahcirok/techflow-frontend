@@ -35,7 +35,6 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-slate-900">
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -43,14 +42,12 @@ const AdminLayout = () => {
         />
       )}
       
-      {/* Sidebar */}
       <aside className={`
         fixed top-0 left-0 z-50 h-full w-64 bg-slate-800 border-r border-slate-700
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
       `}>
-        {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
@@ -68,7 +65,6 @@ const AdminLayout = () => {
           </button>
         </div>
         
-        {/* Nav */}
         <nav className="p-4 space-y-2">
           {navItems.map((item) => (
             <NavLink
@@ -89,7 +85,6 @@ const AdminLayout = () => {
           ))}
         </nav>
         
-        {/* User & Logout */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center">
@@ -114,9 +109,7 @@ const AdminLayout = () => {
         </div>
       </aside>
       
-      {/* Main content */}
       <div className="lg:pl-64">
-        {/* Header */}
         <header className="h-16 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 lg:px-6">
           <button 
             onClick={() => setSidebarOpen(true)}
@@ -132,7 +125,6 @@ const AdminLayout = () => {
           </div>
         </header>
         
-        {/* Page content */}
         <main className="p-4 lg:p-6">
           <Outlet />
         </main>

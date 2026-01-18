@@ -1,34 +1,88 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { orderService } from '../../services/orderService';
+import { productService } from '../../services/productService';
 
 const Dashboard = () => {
-  // Datos de prueba
-  const stats = [
-    { label: 'Órdenes Activas', value: 24, change: '+12%', color: 'sky' },
-    { label: 'Completadas Hoy', value: 8, change: '+5%', color: 'emerald' },
-    { label: 'Usuarios Activos', value: 156, change: '+3%', color: 'purple' },
-    { label: 'Ingresos del Mes', value: '$12,450', change: '+18%', color: 'amber' },
-  ];
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const recentOrders = [
-    { id: 'TF-001', cliente: 'Juan Pérez', equipo: 'Laptop HP', status: 'En Reparación', fecha: '2025-01-17' },
-    { id: 'TF-002', cliente: 'María García', equipo: 'PC Desktop', status: 'Diagnóstico', fecha: '2025-01-17' },
-    { id: 'TF-003', cliente: 'Carlos López', equipo: 'Impresora', status: 'Terminado', fecha: '2025-01-16' },
-    { id: 'TF-004', cliente: 'Ana Torres', equipo: 'Monitor', status: 'Ingresado', fecha: '2025-01-16' },
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [ordersRes, productsRes] = await Promise.all([
+        orderService.getAll(),
+        productService.getAll()
+      ]);
+      setOrders(ordersRes.data || []);
+      setProducts(productsRes.data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const stats = [
+    { 
+      label: 'Órdenes Activas', 
+      value: orders.filter(o => !['ENTREGADO', 'CANCELADO'].includes(o.status)).length,
+      color: 'sky' 
+    },
+    { 
+      label: 'Completadas', 
+      value: orders.filter(o => o.status === 'ENTREGADO').length,
+      color: 'emerald' 
+    },
+    { 
+      label: 'Productos', 
+      value: products.length,
+      color: 'purple' 
+    },
+    { 
+      label: 'Stock Bajo', 
+      value: products.filter(p => p.stock <= (p.lowStockThreshold || 5)).length,
+      color: 'amber' 
+    },
   ];
 
   const getStatusColor = (status) => {
     const colors = {
-      'Ingresado': 'bg-blue-500/20 text-blue-400',
-      'Diagnóstico': 'bg-yellow-500/20 text-yellow-400',
-      'En Reparación': 'bg-purple-500/20 text-purple-400',
-      'Terminado': 'bg-emerald-500/20 text-emerald-400',
+      'PENDIENTE': 'bg-blue-500/20 text-blue-400',
+      'DIAGNOSTICO': 'bg-yellow-500/20 text-yellow-400',
+      'EN_ESPERA_REPUESTO': 'bg-orange-500/20 text-orange-400',
+      'REPARADO': 'bg-purple-500/20 text-purple-400',
+      'ENTREGADO': 'bg-emerald-500/20 text-emerald-400',
+      'CANCELADO': 'bg-red-500/20 text-red-400',
     };
     return colors[status] || 'bg-slate-500/20 text-slate-400';
   };
 
+  const getStatusLabel = (status) => {
+    const labels = {
+      'PENDIENTE': 'Pendiente',
+      'DIAGNOSTICO': 'Diagnóstico',
+      'EN_ESPERA_REPUESTO': 'Esp. Repuesto',
+      'REPARADO': 'Reparado',
+      'ENTREGADO': 'Entregado',
+      'CANCELADO': 'Cancelado',
+    };
+    return labels[status] || status;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Dashboard</h1>
         <p className="text-slate-400">Resumen general del sistema</p>
@@ -39,10 +93,7 @@ const Dashboard = () => {
         {stats.map((stat, index) => (
           <div key={index} className="bg-slate-800 rounded-xl border border-slate-700 p-6">
             <p className="text-slate-400 text-sm mb-1">{stat.label}</p>
-            <div className="flex items-end justify-between">
-              <p className="text-3xl font-bold text-white">{stat.value}</p>
-              <span className="text-emerald-400 text-sm font-medium">{stat.change}</span>
-            </div>
+            <p className="text-3xl font-bold text-white">{stat.value}</p>
           </div>
         ))}
       </div>
@@ -57,26 +108,35 @@ const Dashboard = () => {
             <thead>
               <tr className="border-b border-slate-700">
                 <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">ID</th>
-                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Cliente</th>
-                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Equipo</th>
+                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Descripción</th>
+                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Tipo</th>
                 <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Estado</th>
-                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Fecha</th>
+                <th className="text-right px-6 py-3 text-sm font-medium text-slate-400">Total</th>
               </tr>
             </thead>
             <tbody>
-              {recentOrders.map((order) => (
+              {orders.slice(0, 10).map((order) => (
                 <tr key={order.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                  <td className="px-6 py-4 font-mono text-sm text-slate-400">{order.id}</td>
-                  <td className="px-6 py-4 text-white">{order.cliente}</td>
-                  <td className="px-6 py-4 text-slate-300">{order.equipo}</td>
+                  <td className="px-6 py-4 font-mono text-sm text-slate-400">#{order.id}</td>
+                  <td className="px-6 py-4 text-white">{order.description}</td>
+                  <td className="px-6 py-4 text-slate-300">{order.type}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                      {order.status}
+                      {getStatusLabel(order.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-slate-400">{order.fecha}</td>
+                  <td className="px-6 py-4 text-right text-emerald-400 font-semibold">
+                    ${order.totalCost?.toFixed(2)}
+                  </td>
                 </tr>
               ))}
+              {orders.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                    No hay órdenes registradas
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -3,62 +3,57 @@ import { useNavigate } from 'react-router-dom';
 import { orderService } from '../../services/orderService';
 import toast from 'react-hot-toast';
 
+// Estados del backend
 const COLUMNS = [
-  { id: 'INGRESADO', title: 'Ingresados', color: 'bg-blue-500' },
+  { id: 'PENDIENTE', title: 'Pendientes', color: 'bg-blue-500' },
   { id: 'DIAGNOSTICO', title: 'En Diagnóstico', color: 'bg-yellow-500' },
-  { id: 'ESPERANDO_REPUESTO', title: 'Esperando Repuesto', color: 'bg-orange-500' },
-  { id: 'EN_REPARACION', title: 'En Reparación', color: 'bg-purple-500' },
-  { id: 'TERMINADO', title: 'Terminados', color: 'bg-green-500' },
-];
-
-// Datos de prueba mientras no hay backend
-const mockOrders = [
-  { id: 1, trackingCode: 'TF-001', status: 'INGRESADO', clienteNombre: 'Juan Pérez', equipoDescripcion: 'Laptop HP', createdAt: '2025-01-15' },
-  { id: 2, trackingCode: 'TF-002', status: 'DIAGNOSTICO', clienteNombre: 'María García', equipoDescripcion: 'PC Desktop', createdAt: '2025-01-14' },
-  { id: 3, trackingCode: 'TF-003', status: 'EN_REPARACION', clienteNombre: 'Carlos López', equipoDescripcion: 'Impresora Epson', createdAt: '2025-01-13' },
-  { id: 4, trackingCode: 'TF-004', status: 'TERMINADO', clienteNombre: 'Ana Torres', equipoDescripcion: 'Monitor LG', createdAt: '2025-01-10' },
+  { id: 'EN_ESPERA_REPUESTO', title: 'Esperando Repuesto', color: 'bg-orange-500' },
+  { id: 'REPARADO', title: 'Reparados', color: 'bg-purple-500' },
+  { id: 'ENTREGADO', title: 'Entregados', color: 'bg-green-500' },
 ];
 
 const TecnicoDashboard = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState(mockOrders);
-  const [isLoading, setIsLoading] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Descomentar cuando el backend esté listo
-  // useEffect(() => {
-  //   fetchOrders();
-  // }, []);
+  useEffect(() => {
+    fetchOrders();
+  }, []);
   
-  // const fetchOrders = async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     const response = await orderService.getAll();
-  //     setOrders(response.data);
-  //   } catch (error) {
-  //     console.error('Error:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    try {
+      const response = await orderService.getAll();
+      setOrders(response.data || []);
+    } catch (error) {
+      console.error('Error:', error);
+      setOrders([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getOrdersByStatus = (status) => {
     return orders.filter(order => order.status === status);
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
+    // Guardar estado anterior por si falla
+    const previousOrders = [...orders];
+    
     // Actualización optimista
     setOrders(prev => prev.map(order => 
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
     
-    toast.success('Estado actualizado');
-    
-    // Descomentar cuando el backend esté listo
-    // try {
-    //   await orderService.updateStatus(orderId, newStatus);
-    // } catch (error) {
-    //   fetchOrders(); // Revertir si falla
-    // }
+    try {
+      await orderService.updateStatus(orderId, newStatus);
+      toast.success('Estado actualizado');
+    } catch (error) {
+      // Revertir si falla
+      setOrders(previousOrders);
+    }
   };
 
   const handleDragStart = (e, orderId) => {
@@ -71,10 +66,15 @@ const TecnicoDashboard = () => {
 
   const handleDrop = (e, newStatus) => {
     e.preventDefault();
-    const orderId = parseInt(e.dataTransfer.getData('orderId'));
+    const orderId = e.dataTransfer.getData('orderId');
     if (orderId) {
-      handleStatusChange(orderId, newStatus);
+      handleStatusChange(parseInt(orderId), newStatus);
     }
+  };
+
+  const copyTrackingCode = (code) => {
+    navigator.clipboard.writeText(code);
+    toast.success('Código copiado');
   };
 
   return (
@@ -82,8 +82,8 @@ const TecnicoDashboard = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-          <p className="text-slate-400">Gestiona las órdenes de servicio</p>
+          <h1 className="text-2xl font-bold text-white">Órdenes de Servicio</h1>
+          <p className="text-slate-400">Arrastra las tarjetas para cambiar el estado</p>
         </div>
         <button
           onClick={() => navigate('/tecnico/new-order')}
@@ -117,7 +117,6 @@ const TecnicoDashboard = () => {
             {/* Column content */}
             <div className="space-y-3 min-h-[400px] bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
               {isLoading ? (
-                // Skeletons
                 [...Array(2)].map((_, i) => (
                   <div key={i} className="bg-slate-800 rounded-lg p-4 animate-pulse">
                     <div className="h-4 bg-slate-700 rounded w-3/4 mb-3" />
@@ -130,26 +129,49 @@ const TecnicoDashboard = () => {
                     key={order.id}
                     draggable
                     onDragStart={(e) => handleDragStart(e, order.id)}
-                    className="bg-slate-800 rounded-lg p-4 border border-slate-700 cursor-move hover:border-slate-600 transition-colors"
+                    className="bg-slate-800 rounded-lg p-4 border border-slate-700 cursor-move hover:border-slate-600 transition-colors group"
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="text-xs font-mono text-slate-500">
-                        #{order.trackingCode}
+                    {/* Tracking code */}
+                    <div className="flex items-center justify-between mb-2">
+                      <button
+                        onClick={() => copyTrackingCode(order.trackingCode)}
+                        className="text-xs font-mono text-slate-500 hover:text-sky-400 transition-colors flex items-center gap-1"
+                        title="Copiar código"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        {order.trackingCode?.substring(0, 8)}...
+                      </button>
+                      <span className="text-xs text-slate-600">#{order.id}</span>
+                    </div>
+                    
+                    {/* Description */}
+                    <h4 className="text-white font-medium mb-1 line-clamp-2">
+                      {order.description}
+                    </h4>
+                    
+                    {/* Type badge */}
+                    <span className={`
+                      inline-block px-2 py-0.5 rounded text-xs font-medium mb-2
+                      ${order.type === 'REPARACION' ? 'bg-orange-500/20 text-orange-400' : 
+                        order.type === 'MANTENIMIENTO' ? 'bg-blue-500/20 text-blue-400' : 
+                        'bg-purple-500/20 text-purple-400'}
+                    `}>
+                      {order.type}
+                    </span>
+                    
+                    {/* Costs */}
+                    <div className="flex justify-between text-sm mt-2 pt-2 border-t border-slate-700">
+                      <span className="text-slate-400">Total:</span>
+                      <span className="text-emerald-400 font-semibold">
+                        ${order.totalCost?.toFixed(2) || '0.00'}
                       </span>
                     </div>
-                    <h4 className="text-white font-medium mb-1">
-                      {order.equipoDescripcion}
-                    </h4>
-                    <p className="text-slate-400 text-sm">
-                      {order.clienteNombre}
-                    </p>
-                    <div className="mt-3 pt-3 border-t border-slate-700 flex items-center justify-between">
-                      <span className="text-xs text-slate-500">
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </span>
-                      <button className="text-sky-400 hover:text-sky-300 text-xs">
-                        Ver detalles
-                      </button>
+                    
+                    {/* Date */}
+                    <div className="mt-2 text-xs text-slate-500">
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}
                     </div>
                   </div>
                 ))

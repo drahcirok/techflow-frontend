@@ -1,94 +1,96 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { orderService } from '../../services/orderService';
+import { productService } from '../../services/productService';
 import toast from 'react-hot-toast';
 
-// Factory Visual: Campos dinámicos según tipo
+// Tipos de orden según backend
 const ORDER_TYPES = {
   MANTENIMIENTO: {
     label: 'Mantenimiento',
     color: 'blue',
     description: 'Revisión y mantenimiento preventivo',
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-    fields: [
-      { name: 'ultimoMantenimiento', label: 'Fecha último mantenimiento', type: 'date' },
-      { name: 'kmActual', label: 'Kilometraje / Horas de uso', type: 'number' },
-    ]
   },
   REPARACION: {
     label: 'Reparación',
     color: 'orange',
     description: 'Diagnóstico y reparación de fallas',
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
-      </svg>
-    ),
-    fields: [
-      { name: 'descripcionFalla', label: 'Descripción de la falla', type: 'textarea' },
-      { name: 'urgencia', label: 'Nivel de urgencia', type: 'select', options: ['Baja', 'Media', 'Alta'] },
-    ]
   },
   ENSAMBLE: {
     label: 'Ensamble',
     color: 'purple',
     description: 'Ensamble de equipos nuevos',
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-    ),
-    fields: [
-      { name: 'componentesPrincipales', label: 'Componentes principales', type: 'textarea' },
-      { name: 'tiempoEstimado', label: 'Tiempo estimado (horas)', type: 'number' },
-    ]
   },
 };
 
 const colorClasses = {
-  blue: {
-    selected: 'border-blue-500 bg-blue-500/10 text-blue-400',
-    icon: 'text-blue-400',
-  },
-  orange: {
-    selected: 'border-orange-500 bg-orange-500/10 text-orange-400',
-    icon: 'text-orange-400',
-  },
-  purple: {
-    selected: 'border-purple-500 bg-purple-500/10 text-purple-400',
-    icon: 'text-purple-400',
-  },
+  blue: 'border-blue-500 bg-blue-500/10 text-blue-400',
+  orange: 'border-orange-500 bg-orange-500/10 text-orange-400',
+  purple: 'border-purple-500 bg-purple-500/10 text-purple-400',
 };
 
 const NewOrder = () => {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  
   const [formData, setFormData] = useState({
-    clienteNombre: '',
-    clienteEmail: '',
-    clienteTelefono: '',
-    equipoDescripcion: '',
-    equipoMarca: '',
-    equipoModelo: '',
-    equipoSerial: '',
+    description: '',
+    clientId: 1, // Por ahora fijo, luego se puede mejorar
+    laborCost: '',
   });
-  const [dynamicData, setDynamicData] = useState({});
+  
+  // Items de la orden (repuestos)
+  const [orderItems, setOrderItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Cargar productos al montar
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await productService.getAll();
+      setProducts(response.data || []);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleDynamicChange = (e) => {
-    const { name, value } = e.target;
-    setDynamicData(prev => ({ ...prev, [name]: value }));
+  // Agregar item a la orden
+  const addItem = () => {
+    setOrderItems(prev => [...prev, { productSku: '', quantity: 1 }]);
+  };
+
+  // Actualizar item
+  const updateItem = (index, field, value) => {
+    setOrderItems(prev => prev.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    ));
+  };
+
+  // Eliminar item
+  const removeItem = (index) => {
+    setOrderItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Calcular total estimado
+  const calculateTotal = () => {
+    const laborCost = parseFloat(formData.laborCost) || 0;
+    const itemsTotal = orderItems.reduce((total, item) => {
+      const product = products.find(p => p.sku === item.productSku);
+      return total + (product?.price || 0) * (item.quantity || 0);
+    }, 0);
+    return laborCost + itemsTotal;
   };
 
   const handleSubmit = async (e) => {
@@ -99,30 +101,41 @@ const NewOrder = () => {
       return;
     }
     
-    if (!formData.clienteNombre || !formData.clienteTelefono || !formData.equipoDescripcion) {
-      toast.error('Completa los campos obligatorios');
+    if (!formData.description) {
+      toast.error('Ingresa una descripción');
       return;
     }
     
     setIsLoading(true);
     
     try {
+      // Estructura según API real
       const orderData = {
-        ...formData,
+        description: formData.description,
         type: selectedType,
-        details: dynamicData,
+        clientId: parseInt(formData.clientId) || 1,
+        laborCost: parseFloat(formData.laborCost) || 0,
+        items: orderItems.filter(item => item.productSku && item.quantity > 0),
       };
       
-      // Descomentar cuando el backend esté listo
-      // await orderService.create(orderData);
+      const response = await orderService.create(orderData);
       
-      // Simulación
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Mostrar el tracking code
+      if (response.data?.trackingCode) {
+        toast.success(
+          <div>
+            <p className="font-semibold">¡Orden creada!</p>
+            <p className="text-sm mt-1">Código: {response.data.trackingCode}</p>
+          </div>,
+          { duration: 6000 }
+        );
+      } else {
+        toast.success('Orden creada exitosamente');
+      }
       
-      toast.success('Orden creada exitosamente');
       navigate('/tecnico/dashboard');
     } catch (error) {
-      // Error manejado por interceptor
+      // Error ya manejado por interceptor
     } finally {
       setIsLoading(false);
     }
@@ -142,11 +155,11 @@ const NewOrder = () => {
           Volver
         </button>
         <h1 className="text-2xl font-bold text-white">Nueva Orden de Servicio</h1>
-        <p className="text-slate-400">Completa el formulario para crear una nueva orden</p>
+        <p className="text-slate-400">El sistema calculará el total automáticamente</p>
       </div>
 
       <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
-        {/* Paso 1: Tipo de servicio (Factory Visual) */}
+        {/* Paso 1: Tipo de servicio */}
         <section>
           <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <span className="w-7 h-7 rounded-full bg-sky-600 text-white text-sm flex items-center justify-center">1</span>
@@ -155,26 +168,19 @@ const NewOrder = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Object.entries(ORDER_TYPES).map(([key, type]) => {
               const isSelected = selectedType === key;
-              const colors = colorClasses[type.color];
               
               return (
                 <button
                   key={key}
                   type="button"
-                  onClick={() => {
-                    setSelectedType(key);
-                    setDynamicData({});
-                  }}
+                  onClick={() => setSelectedType(key)}
                   className={`p-6 rounded-xl border-2 transition-all duration-300 text-left
                     ${isSelected 
-                      ? colors.selected 
+                      ? colorClasses[type.color] 
                       : 'border-slate-700 bg-slate-800 hover:border-slate-600'
                     }`}
                 >
-                  <div className={isSelected ? colors.icon : 'text-slate-400'}>
-                    {type.icon}
-                  </div>
-                  <h3 className={`font-semibold mt-3 mb-1 ${isSelected ? '' : 'text-white'}`}>
+                  <h3 className={`font-semibold text-lg mb-1 ${isSelected ? '' : 'text-white'}`}>
                     {type.label}
                   </h3>
                   <p className="text-sm text-slate-400">{type.description}</p>
@@ -184,153 +190,169 @@ const NewOrder = () => {
           </div>
         </section>
 
-        {/* Paso 2: Datos del cliente */}
+        {/* Paso 2: Descripción */}
         <section className="bg-slate-800 rounded-xl border border-slate-700 p-6">
           <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <span className="w-7 h-7 rounded-full bg-sky-600 text-white text-sm flex items-center justify-center">2</span>
-            Datos del Cliente
+            Descripción del Trabajo
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm text-slate-300 mb-2">Nombre completo *</label>
-              <input
-                type="text"
-                name="clienteNombre"
-                value={formData.clienteNombre}
+              <label className="block text-sm text-slate-300 mb-2">
+                Descripción del problema/servicio *
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                placeholder="Juan Pérez"
+                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[120px]"
+                placeholder="Ej: PC no da video, limpieza general..."
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">Email</label>
-              <input
-                type="email"
-                name="clienteEmail"
-                value={formData.clienteEmail}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                placeholder="cliente@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">Teléfono *</label>
-              <input
-                type="tel"
-                name="clienteTelefono"
-                value={formData.clienteTelefono}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                placeholder="0999123456"
-                required
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Paso 3: Datos del equipo */}
-        <section className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-sky-600 text-white text-sm flex items-center justify-center">3</span>
-            Datos del Equipo
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm text-slate-300 mb-2">Descripción del equipo *</label>
-              <input
-                type="text"
-                name="equipoDescripcion"
-                value={formData.equipoDescripcion}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                placeholder="Ej: Laptop, PC de escritorio, Impresora..."
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">Marca</label>
-              <input
-                type="text"
-                name="equipoMarca"
-                value={formData.equipoMarca}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                placeholder="HP, Dell, Lenovo..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">Modelo</label>
-              <input
-                type="text"
-                name="equipoModelo"
-                value={formData.equipoModelo}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                placeholder="Pavilion 15, XPS 13..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-slate-300 mb-2">Número de serie</label>
-              <input
-                type="text"
-                name="equipoSerial"
-                value={formData.equipoSerial}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                placeholder="SN123456789"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Paso 4: Campos dinámicos según tipo */}
-        {selectedType && (
-          <section className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-sky-600 text-white text-sm flex items-center justify-center">4</span>
-              Detalles de {ORDER_TYPES[selectedType].label}
-            </h2>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {ORDER_TYPES[selectedType].fields.map((field) => (
-                <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
-                  <label className="block text-sm text-slate-300 mb-2">
-                    {field.label}
-                  </label>
-                  {field.type === 'textarea' ? (
-                    <textarea
-                      name={field.name}
-                      value={dynamicData[field.name] || ''}
-                      onChange={handleDynamicChange}
-                      className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all min-h-[100px]"
-                      rows={3}
-                    />
-                  ) : field.type === 'select' ? (
-                    <select
-                      name={field.name}
-                      value={dynamicData[field.name] || ''}
-                      onChange={handleDynamicChange}
-                      className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">Seleccionar...</option>
-                      {field.options.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={field.type}
-                      name={field.name}
-                      value={dynamicData[field.name] || ''}
-                      onChange={handleDynamicChange}
-                      className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                    />
-                  )}
-                </div>
-              ))}
+              <div>
+                <label className="block text-sm text-slate-300 mb-2">
+                  ID del Cliente
+                </label>
+                <input
+                  type="number"
+                  name="clientId"
+                  value={formData.clientId}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  min="1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-2">
+                  Costo de Mano de Obra ($)
+                </label>
+                <input
+                  type="number"
+                  name="laborCost"
+                  value={formData.laborCost}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  placeholder="30.00"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+
+        {/* Paso 3: Repuestos */}
+        <section className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-sky-600 text-white text-sm flex items-center justify-center">3</span>
+              Repuestos (Opcional)
+            </h2>
+            <button
+              type="button"
+              onClick={addItem}
+              className="text-sm text-sky-400 hover:text-sky-300 flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Agregar repuesto
+            </button>
+          </div>
+          
+          {loadingProducts ? (
+            <div className="text-center py-8 text-slate-400">Cargando productos...</div>
+          ) : orderItems.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 border-2 border-dashed border-slate-700 rounded-lg">
+              <p>No hay repuestos agregados</p>
+              <button
+                type="button"
+                onClick={addItem}
+                className="mt-2 text-sky-400 hover:text-sky-300 text-sm"
+              >
+                + Agregar primer repuesto
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {orderItems.map((item, index) => {
+                const product = products.find(p => p.sku === item.productSku);
+                return (
+                  <div key={index} className="flex gap-4 items-start bg-slate-900 p-4 rounded-lg">
+                    <div className="flex-1">
+                      <label className="block text-xs text-slate-400 mb-1">Producto</label>
+                      <select
+                        value={item.productSku}
+                        onChange={(e) => updateItem(index, 'productSku', e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      >
+                        <option value="">Seleccionar...</option>
+                        {products.map(p => (
+                          <option key={p.sku} value={p.sku}>
+                            {p.name} - ${p.price} (Stock: {p.stock})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="w-24">
+                      <label className="block text-xs text-slate-400 mb-1">Cantidad</label>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        min="1"
+                        max={product?.stock || 999}
+                      />
+                    </div>
+                    <div className="w-24 text-right">
+                      <label className="block text-xs text-slate-400 mb-1">Subtotal</label>
+                      <p className="py-2 text-emerald-400 font-semibold">
+                        ${((product?.price || 0) * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className="mt-6 text-red-400 hover:text-red-300 p-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Resumen */}
+        <section className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Resumen</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Mano de obra:</span>
+              <span className="text-white">${parseFloat(formData.laborCost || 0).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Repuestos ({orderItems.length}):</span>
+              <span className="text-white">
+                ${orderItems.reduce((total, item) => {
+                  const product = products.find(p => p.sku === item.productSku);
+                  return total + (product?.price || 0) * (item.quantity || 0);
+                }, 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="flex justify-between pt-2 border-t border-slate-700 text-lg font-semibold">
+              <span className="text-white">Total estimado:</span>
+              <span className="text-emerald-400">${calculateTotal().toFixed(2)}</span>
+            </div>
+          </div>
+        </section>
 
         {/* Botones */}
         <div className="flex justify-end gap-4 pt-4">

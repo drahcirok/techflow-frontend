@@ -27,19 +27,19 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message = error.response?.data?.message || 'Error de conexión';
+    const message = error.response?.data?.message || error.response?.data || 'Error de conexión';
     
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
       toast.error('Sesión expirada. Inicia sesión nuevamente.');
-    } else if (error.response?.status === 403) {
-      toast.error('No tienes permisos para esta acción');
     } else if (error.response?.status >= 500) {
-      toast.error('Error del servidor. Intenta más tarde.');
+      toast.error(typeof message === 'string' ? message : 'Error del servidor. Verifica el stock.');
+    } else if (error.response?.status === 400) {
+      toast.error(typeof message === 'string' ? message : 'Datos inválidos');
     } else {
-      toast.error(message);
+      toast.error(typeof message === 'string' ? message : 'Error de conexión');
     }
     
     return Promise.reject(error);

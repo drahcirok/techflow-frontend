@@ -10,6 +10,7 @@ import ClienteLayout from './layouts/ClienteLayout';
 
 // Pages
 import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 import AdminDashboard from './pages/admin/Dashboard';
 import Users from './pages/admin/Users';
 import TecnicoDashboard from './pages/tecnico/TecnicoDashboard';
@@ -31,23 +32,18 @@ function App() {
               border: '1px solid #334155',
             },
             success: {
-              iconTheme: {
-                primary: '#10b981',
-                secondary: '#f1f5f9',
-              },
+              iconTheme: { primary: '#10b981', secondary: '#f1f5f9' },
             },
             error: {
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: '#f1f5f9',
-              },
+              iconTheme: { primary: '#ef4444', secondary: '#f1f5f9' },
             },
           }}
         />
         
         <Routes>
-          {/* Ruta pública */}
+          {/* Rutas públicas */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           
           {/* Rutas Admin */}
           <Route path="/admin" element={
