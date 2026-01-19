@@ -29,7 +29,7 @@ function App() {
             style: {
               background: '#1e293b',
               color: '#f1f5f9',
-              border: '1px solid #334155',
+              borderRadius: '12px',
             },
             success: {
               iconTheme: { primary: '#10b981', secondary: '#f1f5f9' },
@@ -44,6 +44,7 @@ function App() {
           {/* Rutas públicas */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/tracking" element={<Tracking />} />
           
           {/* Rutas Admin */}
           <Route path="/admin" element={

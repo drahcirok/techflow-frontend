@@ -27,56 +27,28 @@ const Dashboard = () => {
   };
 
   const stats = [
-    { 
-      label: 'Órdenes Activas', 
-      value: orders.filter(o => !['ENTREGADO', 'CANCELADO'].includes(o.status)).length,
-      color: 'sky' 
-    },
-    { 
-      label: 'Completadas', 
-      value: orders.filter(o => o.status === 'ENTREGADO').length,
-      color: 'emerald' 
-    },
-    { 
-      label: 'Productos', 
-      value: products.length,
-      color: 'purple' 
-    },
-    { 
-      label: 'Stock Bajo', 
-      value: products.filter(p => p.stock <= (p.lowStockThreshold || 5)).length,
-      color: 'amber' 
-    },
+    { label: 'Órdenes Activas', value: orders.filter(o => !['ENTREGADO', 'CANCELADO'].includes(o.status)).length, color: 'bg-blue-500' },
+    { label: 'Completadas', value: orders.filter(o => o.status === 'ENTREGADO').length, color: 'bg-green-500' },
+    { label: 'Productos', value: products.length, color: 'bg-purple-500' },
+    { label: 'Stock Bajo', value: products.filter(p => p.stock <= (p.lowStockThreshold || 5)).length, color: 'bg-orange-500' },
   ];
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'PENDIENTE': 'bg-blue-500/20 text-blue-400',
-      'DIAGNOSTICO': 'bg-yellow-500/20 text-yellow-400',
-      'EN_ESPERA_REPUESTO': 'bg-orange-500/20 text-orange-400',
-      'REPARADO': 'bg-purple-500/20 text-purple-400',
-      'ENTREGADO': 'bg-emerald-500/20 text-emerald-400',
-      'CANCELADO': 'bg-red-500/20 text-red-400',
+  const getStatusBadge = (status) => {
+    const styles = {
+      'PENDIENTE': 'bg-slate-100 text-slate-600',
+      'DIAGNOSTICO': 'bg-blue-100 text-blue-600',
+      'EN_ESPERA_REPUESTO': 'bg-orange-100 text-orange-600',
+      'REPARADO': 'bg-green-100 text-green-600',
+      'ENTREGADO': 'bg-emerald-100 text-emerald-600',
+      'CANCELADO': 'bg-red-100 text-red-600',
     };
-    return colors[status] || 'bg-slate-500/20 text-slate-400';
-  };
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      'PENDIENTE': 'Pendiente',
-      'DIAGNOSTICO': 'Diagnóstico',
-      'EN_ESPERA_REPUESTO': 'Esp. Repuesto',
-      'REPARADO': 'Reparado',
-      'ENTREGADO': 'Entregado',
-      'CANCELADO': 'Cancelado',
-    };
-    return labels[status] || status;
+    return styles[status] || 'bg-slate-100 text-slate-600';
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-green-500/30 border-t-green-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -84,48 +56,48 @@ const Dashboard = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-slate-400">Resumen general del sistema</p>
+        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+        <p className="text-slate-500">Resumen general del sistema</p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-            <p className="text-slate-400 text-sm mb-1">{stat.label}</p>
-            <p className="text-3xl font-bold text-white">{stat.value}</p>
+          <div key={index} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+            <p className="text-slate-500 text-sm mb-1">{stat.label}</p>
+            <p className="text-3xl font-bold text-slate-800">{stat.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Recent Orders */}
-      <div className="bg-slate-800 rounded-xl border border-slate-700">
-        <div className="px-6 py-4 border-b border-slate-700">
-          <h2 className="text-lg font-semibold text-white">Órdenes Recientes</h2>
+      {/* Orders Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-800">Órdenes Recientes</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">ID</th>
-                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Descripción</th>
-                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Tipo</th>
-                <th className="text-left px-6 py-3 text-sm font-medium text-slate-400">Estado</th>
-                <th className="text-right px-6 py-3 text-sm font-medium text-slate-400">Total</th>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="text-left px-6 py-3 text-sm font-semibold text-slate-600">ID</th>
+                <th className="text-left px-6 py-3 text-sm font-semibold text-slate-600">Descripción</th>
+                <th className="text-left px-6 py-3 text-sm font-semibold text-slate-600">Tipo</th>
+                <th className="text-left px-6 py-3 text-sm font-semibold text-slate-600">Estado</th>
+                <th className="text-right px-6 py-3 text-sm font-semibold text-slate-600">Total</th>
               </tr>
             </thead>
             <tbody>
               {orders.slice(0, 10).map((order) => (
-                <tr key={order.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                  <td className="px-6 py-4 font-mono text-sm text-slate-400">#{order.id}</td>
-                  <td className="px-6 py-4 text-white">{order.description}</td>
-                  <td className="px-6 py-4 text-slate-300">{order.type}</td>
+                <tr key={order.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-6 py-4 font-mono text-sm text-slate-500">#{order.id}</td>
+                  <td className="px-6 py-4 text-slate-800">{order.description}</td>
+                  <td className="px-6 py-4 text-slate-600">{order.type}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                      {getStatusLabel(order.status)}
+                    <span className={`px-3 py-1 rounded-lg text-xs font-medium ${getStatusBadge(order.status)}`}>
+                      {order.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right text-emerald-400 font-semibold">
+                  <td className="px-6 py-4 text-right text-green-600 font-semibold">
                     ${order.totalCost?.toFixed(2)}
                   </td>
                 </tr>
