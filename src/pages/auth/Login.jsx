@@ -27,16 +27,44 @@ const Login = () => {
     
     try {
       const user = await login(email, password);
-      toast.success(`¡Bienvenido, ${user.name}!`);
       
+      // 🔍 DEBUG: Mira la consola (F12) si no redirige
+      console.log('✅ Usuario logueado:', user);
+      console.log('🔑 Rol detectado:', user.role);
+
+      // Mapa "Blindado" de rutas (Cubre mayúsculas, minúsculas y prefijos)
       const redirectPath = {
+        // Opción 1: Estándar (Como lo definimos en el Enum)
         ADMIN: '/admin/dashboard',
         TECNICO: '/tecnico/dashboard',
         CLIENTE: '/cliente/tracking',
+        
+        // Opción 2: Prefijos de Spring Security
+        ROLE_ADMIN: '/admin/dashboard',
+        ROLE_TECNICO: '/tecnico/dashboard',
+        ROLE_CLIENTE: '/cliente/tracking',
+        
+        // Opción 3: Minúsculas (Por si acaso)
+        admin: '/admin/dashboard',
+        tecnico: '/tecnico/dashboard',
+        cliente: '/cliente/tracking',
       };
-      navigate(redirectPath[user.role] || from, { replace: true });
+
+      const targetPath = redirectPath[user.role];
+
+      if (targetPath) {
+        toast.success(`¡Bienvenido, ${user.name}!`);
+        navigate(targetPath, { replace: true });
+      } else {
+        console.error('❌ Error: El rol no tiene ruta definida:', user.role);
+        toast.error(`Error: Rol desconocido (${user.role})`);
+      }
+
     } catch (error) {
-      // Error manejado por interceptor
+      console.error('❌ Error en login:', error);
+      // El toast de error específico ya debería venir del interceptor, 
+      // pero por seguridad mostramos algo genérico si no hay toast previo.
+      if (!toast.d) toast.error('Error al iniciar sesión');
     } finally {
       setIsLoading(false);
     }

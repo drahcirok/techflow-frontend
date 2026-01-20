@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { authService } from '../services/authService';
+import { loginService } from '../services/authService'; 
 
 const AuthContext = createContext(null);
 
-// Función para decodificar JWT y extraer payload
+// ✅ TU FUNCIÓN DECODIFICADORA
 const decodeToken = (token) => {
   try {
     const base64Url = token.split('.')[1];
@@ -25,53 +25,75 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Función auxiliar para buscar el rol
+  const extractRole = (decoded) => {
+    if (!decoded) return null;
+    if (decoded.role) return decoded.role;
+    if (decoded.roles && decoded.roles.length > 0) return decoded.roles[0];
+    if (decoded.authorities && decoded.authorities.length > 0) return decoded.authorities[0];
+    return null;
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
     
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else if (token) {
-      // Si hay token pero no user, decodificar el token
+    if (token) {
       const decoded = decodeToken(token);
+      
+      // 🔴 CAMBIO IMPORTANTE: Quitamos la validación estricta de tiempo (exp)
+      // Antes: if (decoded && decoded.exp * 1000 > Date.now())
+      // Ahora: Solo verificamos que el token se pueda decodificar
       if (decoded) {
+        console.log("✅ Token recuperado al recargar:", decoded);
+        
+        const foundRole = extractRole(decoded);
+        
         const userData = {
-          id: decoded.sub || decoded.id,
-          email: decoded.email || decoded.sub,
-          name: decoded.name || decoded.email?.split('@')[0] || 'Usuario',
-          role: decoded.role || 'TECNICO',
+          email: decoded.sub, 
+          role: foundRole || 'TECNICO', 
+          name: decoded.name || decoded.sub?.split('@')[0] || 'Usuario'
         };
-        localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
+      } else {
+        console.warn("⚠️ Token corrupto o inválido, cerrando sesión.");
+        logout();
       }
     }
     setLoading(false);
   }, []);
 
   const login = async (email, password) => {
-    const response = await authService.login(email, password);
-    const { token } = response.data;
-    
-    localStorage.setItem('token', token);
-    
-    // Decodificar token para obtener info del usuario
-    const decoded = decodeToken(token);
-    const userData = {
-      id: decoded?.sub || decoded?.id || 1,
-      email: decoded?.email || email,
-      name: decoded?.name || email.split('@')[0],
-      role: decoded?.role || 'TECNICO',
-    };
-    
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    
-    return userData;
+    try {
+      const data = await loginService(email, password);
+      const { token } = data;
+      
+      localStorage.setItem('token', token);
+      
+      const decoded = decodeToken(token);
+      
+      // Logs de depuración
+      console.log("🕵️‍♂️ LOGIN - TOKEN PURO:", decoded);
+      
+      const foundRole = extractRole(decoded);
+      console.log("🔑 LOGIN - ROL ENCONTRADO:", foundRole);
+
+      const userData = {
+        email: decoded.sub,
+        role: foundRole, 
+        name: decoded.name || email.split('@')[0]
+      };
+      
+      setUser(userData);
+      return userData;
+
+    } catch (error) {
+      throw error;
+    }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('user'); 
     setUser(null);
   };
 
@@ -81,9 +103,10 @@ export const AuthProvider = ({ children }) => {
     logout,
     loading,
     isAuthenticated: !!user,
-    isAdmin: user?.role === 'ADMIN',
-    isTecnico: user?.role === 'TECNICO',
-    isCliente: user?.role === 'CLIENTE',
+    // Helpers de protección (Aceptan variantes con y sin prefijo ROLE_)
+    isAdmin: user?.role === 'ADMIN' || user?.role === 'ROLE_ADMIN',
+    isTecnico: user?.role === 'TECNICO' || user?.role === 'ROLE_TECNICO',
+    isCliente: user?.role === 'CLIENTE' || user?.role === 'ROLE_CLIENTE',
   };
 
   return (

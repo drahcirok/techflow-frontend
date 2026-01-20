@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../../services/authService';
+// 👇 CAMBIO 1: Importamos la función específica, no el objeto antiguo
+import { registerService } from '../../services/authService';
 import toast from 'react-hot-toast';
 
 const Register = () => {
@@ -47,7 +48,8 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      await authService.register({
+      // 👇 CAMBIO 2: Llamamos a la función directamente
+      await registerService({
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -57,7 +59,9 @@ const Register = () => {
       toast.success('¡Cuenta creada exitosamente!');
       navigate('/login');
     } catch (error) {
-      // Error manejado por interceptor
+       // Si el backend envía un mensaje de error específico, lo mostramos
+       const errorMsg = error.response?.data?.message || 'Error al registrar usuario';
+       toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
