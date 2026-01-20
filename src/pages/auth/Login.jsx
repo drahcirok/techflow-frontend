@@ -27,43 +27,74 @@ const Login = () => {
     
     try {
       const user = await login(email, password);
-      toast.success(`¡Bienvenido, ${user.name}!`);
       
+      // 🔍 DEBUG: Mira la consola (F12) si no redirige
+      console.log('✅ Usuario logueado:', user);
+      console.log('🔑 Rol detectado:', user.role);
+
+      // Mapa "Blindado" de rutas (Cubre mayúsculas, minúsculas y prefijos)
       const redirectPath = {
+        // Opción 1: Estándar (Como lo definimos en el Enum)
         ADMIN: '/admin/dashboard',
         TECNICO: '/tecnico/dashboard',
         CLIENTE: '/cliente/tracking',
+        
+        // Opción 2: Prefijos de Spring Security
+        ROLE_ADMIN: '/admin/dashboard',
+        ROLE_TECNICO: '/tecnico/dashboard',
+        ROLE_CLIENTE: '/cliente/tracking',
+        
+        // Opción 3: Minúsculas (Por si acaso)
+        admin: '/admin/dashboard',
+        tecnico: '/tecnico/dashboard',
+        cliente: '/cliente/tracking',
       };
-      navigate(redirectPath[user.role] || from, { replace: true });
+
+      const targetPath = redirectPath[user.role];
+
+      if (targetPath) {
+        toast.success(`¡Bienvenido, ${user.name}!`);
+        navigate(targetPath, { replace: true });
+      } else {
+        console.error('❌ Error: El rol no tiene ruta definida:', user.role);
+        toast.error(`Error: Rol desconocido (${user.role})`);
+      }
+
     } catch (error) {
-      // Error ya manejado por interceptor
+      console.error('❌ Error en login:', error);
+      // El toast de error específico ya debería venir del interceptor, 
+      // pero por seguridad mostramos algo genérico si no hay toast previo.
+      if (!toast.d) toast.error('Error al iniciar sesión');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-sky-900/20 via-slate-900 to-slate-900" />
-      
-      <div className="relative w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-sky-700 mb-4 shadow-lg shadow-sky-500/25">
-            <span className="text-2xl font-bold text-white">TF</span>
-          </div>
-          <h1 className="text-3xl font-bold text-white">TechFlow</h1>
-          <p className="text-slate-400 mt-2">Sistema de Gestión de Taller</p>
-        </div>
-        
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4">
+      <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-slate-800 rounded-2xl border border-slate-700 p-8 shadow-xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+          {/* Icon */}
+          <div className="flex justify-center mb-6">
+            <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center">
+              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+          </div>
+
+          {/* Title */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-slate-800">Bienvenido a TechFlow</h1>
+            <p className="text-slate-500 mt-1">Sistema de Gestión de Taller</p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Correo electrónico
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Correo Electrónico
               </label>
               <div className="relative">
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,8 +104,8 @@ const Login = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                  placeholder="usuario@techflow.com"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="tecnico@techflow.com"
                   autoComplete="email"
                 />
               </div>
@@ -82,25 +113,25 @@ const Login = () => {
             
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Contraseña
               </label>
               <div className="relative">
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showPassword ? (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,7 +151,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30"
             >
               {isLoading ? (
                 <>
@@ -128,37 +159,23 @@ const Login = () => {
                   Ingresando...
                 </>
               ) : (
-                'Iniciar Sesión'
+                'Ingresar'
               )}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-slate-800 text-slate-500">o</span>
+          {/* Links */}
+          <div className="mt-6 text-center space-y-3">
+            <Link to="/tracking" className="text-blue-500 hover:text-blue-600 text-sm font-medium block">
+              ¿Eres cliente? Consulta tu estado aquí
+            </Link>
+            <div className="border-t border-slate-200 pt-4">
+              <Link to="/register" className="text-slate-500 hover:text-slate-700 text-sm">
+                ¿No tienes cuenta? <span className="text-blue-500 font-medium">Regístrate</span>
+              </Link>
             </div>
           </div>
-
-          {/* Register link */}
-          <Link
-            to="/register"
-            className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-            Crear cuenta nueva
-          </Link>
         </div>
-        
-        {/* Footer */}
-        <p className="text-center text-slate-500 text-sm mt-6">
-          TechFlow © 2025 - Todos los derechos reservados
-        </p>
       </div>
     </div>
   );
