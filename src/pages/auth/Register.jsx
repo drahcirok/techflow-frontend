@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-// 👇 CAMBIO 1: Importamos la función específica, no el objeto antiguo
 import { registerService } from '../../services/authService';
 import toast from 'react-hot-toast';
 
@@ -48,7 +47,6 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      // 👇 CAMBIO 2: Llamamos a la función directamente
       await registerService({
         name: formData.name,
         email: formData.email,
@@ -59,7 +57,6 @@ const Register = () => {
       toast.success('¡Cuenta creada exitosamente!');
       navigate('/login');
     } catch (error) {
-       // Si el backend envía un mensaje de error específico, lo mostramos
        const errorMsg = error.response?.data?.message || 'Error al registrar usuario';
        toast.error(errorMsg);
     } finally {
@@ -71,13 +68,9 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-          {/* Icon */}
+          {/* Logo */}
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-            </div>
+            <img src="/logo.png" alt="TechFlow" className="w-16 h-16 object-contain" />
           </div>
 
           <div className="text-center mb-8">
@@ -90,28 +83,38 @@ const Register = () => {
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Nombre Completo
               </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej. Roberto Gomez"
-              />
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  placeholder="Ej. Roberto Gomez"
+                />
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Correo Electrónico
               </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="cliente@email.com"
-              />
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  placeholder="cliente@email.com"
+                />
+              </div>
             </div>
             
             <div>
@@ -119,12 +122,15 @@ const Register = () => {
                 Contraseña
               </label>
               <div className="relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                   placeholder="••••••••"
                 />
                 <button
@@ -153,20 +159,25 @@ const Register = () => {
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Confirmar Contraseña
               </label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  placeholder="••••••••"
+                />
+              </div>
             </div>
             
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 mt-6"
+              className="w-full py-3 bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-sky-500/30 mt-6"
             >
               {isLoading ? (
                 <>
@@ -181,10 +192,15 @@ const Register = () => {
 
           <div className="mt-6 text-center">
             <Link to="/login" className="text-slate-500 hover:text-slate-700 text-sm">
-              ¿Ya tienes cuenta? <span className="text-blue-500 font-medium">Iniciar Sesión</span>
+              ¿Ya tienes cuenta? <span className="text-sky-500 font-medium">Iniciar Sesión</span>
             </Link>
           </div>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-slate-400 text-xs mt-6">
+          © 2024 TechFlow. Sistema de gestión de taller técnico.
+        </p>
       </div>
     </div>
   );

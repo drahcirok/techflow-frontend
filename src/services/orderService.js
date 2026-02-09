@@ -21,7 +21,22 @@ export const orderService = {
   // GET /orders/track/{trackingCode} - Rastreo público (NO requiere token)
   // Este endpoint es público para que el cliente pueda ver su orden
   getByTracking: (trackingCode) => api.get(`/orders/track/${trackingCode}`),
-  
+
+  // GET /orders/mine - Órdenes del cliente autenticado
+  getMyOrders: () => api.get('/orders/mine'),
+
+  // POST /orders/{id}/rating - Agregar valoración a una orden
+  addRating: (id, data) => api.post(`/orders/${id}/rating`, data),
+
   // DELETE /orders/{id}
   delete: (id) => api.delete(`/orders/${id}`),
+
+  // GET /orders/client/{clientId} - Órdenes de un cliente específico (para admin)
+  getByClientId: (clientId) => api.get(`/orders/client/${clientId}`),
+
+  // GET /orders/all - Todas las órdenes incluyendo historial
+  getAllIncludingHistory: () => api.get('/orders/all'),
+
+  // GET /orders/history - Órdenes del historial
+  getHistory: () => api.get('/orders/history'),
 };

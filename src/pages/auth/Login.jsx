@@ -28,26 +28,19 @@ const Login = () => {
     try {
       const user = await login(email, password);
       
-      // 🔍 DEBUG: Mira la consola (F12) si no redirige
       console.log('✅ Usuario logueado:', user);
       console.log('🔑 Rol detectado:', user.role);
 
-      // Mapa "Blindado" de rutas (Cubre mayúsculas, minúsculas y prefijos)
       const redirectPath = {
-        // Opción 1: Estándar (Como lo definimos en el Enum)
         ADMIN: '/admin/dashboard',
         TECNICO: '/tecnico/dashboard',
-        CLIENTE: '/cliente/tracking',
-        
-        // Opción 2: Prefijos de Spring Security
+        CLIENTE: '/cliente/dashboard',
         ROLE_ADMIN: '/admin/dashboard',
         ROLE_TECNICO: '/tecnico/dashboard',
-        ROLE_CLIENTE: '/cliente/tracking',
-        
-        // Opción 3: Minúsculas (Por si acaso)
+        ROLE_CLIENTE: '/cliente/dashboard',
         admin: '/admin/dashboard',
         tecnico: '/tecnico/dashboard',
-        cliente: '/cliente/tracking',
+        cliente: '/cliente/dashboard',
       };
 
       const targetPath = redirectPath[user.role];
@@ -62,8 +55,6 @@ const Login = () => {
 
     } catch (error) {
       console.error('❌ Error en login:', error);
-      // El toast de error específico ya debería venir del interceptor, 
-      // pero por seguridad mostramos algo genérico si no hay toast previo.
       if (!toast.d) toast.error('Error al iniciar sesión');
     } finally {
       setIsLoading(false);
@@ -75,18 +66,14 @@ const Login = () => {
       <div className="w-full max-w-md">
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
-          {/* Icon */}
+          {/* Logo */}
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center">
-              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
+            <img src="/logo.png" alt="TechFlow" className="w-16 h-16 object-contain" />
           </div>
 
           {/* Title */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-800">Bienvenido a TechFlow</h1>
+            <h1 className="text-2xl font-bold text-slate-800">TechFlow</h1>
             <p className="text-slate-500 mt-1">Sistema de Gestión de Taller</p>
           </div>
           
@@ -104,8 +91,8 @@ const Login = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="tecnico@techflow.com"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                  placeholder="usuario@techflow.com"
                   autoComplete="email"
                 />
               </div>
@@ -118,13 +105,13 @@ const Login = () => {
               </label>
               <div className="relative">
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-12 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
                   autoComplete="current-password"
                 />
@@ -151,7 +138,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30"
+              className="w-full py-3 bg-sky-500 hover:bg-sky-600 disabled:bg-sky-300 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-sky-500/30"
             >
               {isLoading ? (
                 <>
@@ -166,16 +153,21 @@ const Login = () => {
 
           {/* Links */}
           <div className="mt-6 text-center space-y-3">
-            <Link to="/tracking" className="text-blue-500 hover:text-blue-600 text-sm font-medium block">
+            <Link to="/tracking" className="text-sky-500 hover:text-sky-600 text-sm font-medium block">
               ¿Eres cliente? Consulta tu estado aquí
             </Link>
             <div className="border-t border-slate-200 pt-4">
               <Link to="/register" className="text-slate-500 hover:text-slate-700 text-sm">
-                ¿No tienes cuenta? <span className="text-blue-500 font-medium">Regístrate</span>
+                ¿No tienes cuenta? <span className="text-sky-500 font-medium">Regístrate</span>
               </Link>
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-slate-400 text-xs mt-6">
+          © 2024 TechFlow. Sistema de gestión de taller técnico.
+        </p>
       </div>
     </div>
   );

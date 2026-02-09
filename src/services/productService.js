@@ -8,11 +8,14 @@ export const productService = {
   // Body: { sku, name, description, price, stock, lowStockThreshold }
   create: (data) => api.post('/products', data),
   
-  // POST /products - También sirve para editar (si SKU existe, lo actualiza)
-  update: (data) => api.post('/products', data),
+  // PUT /products/{id} - Actualizar producto existente
+  update: (id, data) => api.put(`/products/${id}`, data),
   
   // DELETE /products/{id} - Soft delete (oculta pero no borra)
   delete: (id) => api.delete(`/products/${id}`),
+
+  // GET /products/available - Productos disponibles para la tienda (con stock > 0)
+  getAvailableProducts: () => api.get('/products/available'),
 };
 
 // Alias para mantener compatibilidad
