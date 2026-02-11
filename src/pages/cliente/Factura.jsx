@@ -208,7 +208,7 @@ const Factura = () => {
                 {/* Items */}
                 {order.items && order.items.length > 0 && order.items.map((item, idx) => (
                   <tr key={idx}>
-                    <td className="py-3 text-slate-800">{item.productName || item.productSku}</td>
+                    <td className="py-3 text-slate-800">{item.product?.name || item.productName || item.productSku || 'Repuesto'}</td>
                     <td className="py-3 text-center text-slate-600">{item.quantity}</td>
                     <td className="py-3 text-right text-slate-600">${(item.price || 0).toFixed(2)}</td>
                     <td className="py-3 text-right font-medium text-slate-800">${((item.price || 0) * (item.quantity || 0)).toFixed(2)}</td>

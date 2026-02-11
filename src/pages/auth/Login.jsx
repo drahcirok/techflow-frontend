@@ -67,12 +67,8 @@ const Login = () => {
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
           {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <img src="/logo.png" alt="TechFlow" className="w-16 h-16 object-contain" />
-          </div>
-
-          {/* Title */}
-          <div className="text-center mb-8">
+          <div className="flex flex-col items-center mb-8">
+            <img src="/logo.png" alt="TechFlow" className="w-28 h-28 object-contain mb-3" />
             <h1 className="text-2xl font-bold text-slate-800">TechFlow</h1>
             <p className="text-slate-500 mt-1">Sistema de Gestión de Taller</p>
           </div>

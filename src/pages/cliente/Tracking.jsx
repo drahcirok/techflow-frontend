@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { orderService } from '../../services/orderService';
 import toast from 'react-hot-toast';
@@ -8,51 +8,51 @@ import toast from 'react-hot-toast';
 const SERVICE_TYPE_CONFIG = {
   REPARACION: {
     steps: [
-      { id: 'PENDIENTE', label: 'Recibido', icon: '📥' },
-      { id: 'DIAGNOSTICO', label: 'Diagnóstico', icon: '🔍' },
-      { id: 'EN_ESPERA_REPUESTO', label: 'Reparación', icon: '🔧' },
-      { id: 'REPARADO', label: 'Listo', icon: '✅' },
+      { id: 'PENDIENTE', label: 'Recibido' },
+      { id: 'DIAGNOSTICO', label: 'Diagnostico' },
+      { id: 'EN_ESPERA_REPUESTO', label: 'Reparacion' },
+      { id: 'REPARADO', label: 'Listo' },
     ],
     activityMessages: {
       REPARADO: 'Equipo reparado y listo para entrega.',
-      EN_ESPERA_REPUESTO: 'Técnico inició la reparación del equipo.',
-      DIAGNOSTICO: 'Diagnóstico completado. Se requiere revisión.',
+      EN_ESPERA_REPUESTO: 'Tecnico inicio la reparacion del equipo.',
+      DIAGNOSTICO: 'Diagnostico completado. Se requiere revision.',
       PENDIENTE: 'Orden recibida en el sistema.',
     },
-    successMessage: '¡Tu equipo está reparado! Puedes pasar a recogerlo.',
-    statusBadgeReady: '✅ Listo para recoger',
+    successMessage: 'Tu equipo esta reparado. Puedes pasar a recogerlo.',
+    statusBadgeReady: 'Listo para recoger',
   },
   MANTENIMIENTO: {
     steps: [
-      { id: 'PENDIENTE', label: 'Recibido', icon: '📥' },
-      { id: 'DIAGNOSTICO', label: 'Revisión', icon: '🔍' },
-      { id: 'EN_ESPERA_REPUESTO', label: 'Mantenimiento', icon: '🛠️' },
-      { id: 'REPARADO', label: 'Listo', icon: '✅' },
+      { id: 'PENDIENTE', label: 'Recibido' },
+      { id: 'DIAGNOSTICO', label: 'Revision' },
+      { id: 'EN_ESPERA_REPUESTO', label: 'Mantenimiento' },
+      { id: 'REPARADO', label: 'Listo' },
     ],
     activityMessages: {
       REPARADO: 'Mantenimiento completado. Equipo listo para entrega.',
-      EN_ESPERA_REPUESTO: 'Técnico inició el mantenimiento del equipo.',
-      DIAGNOSTICO: 'Revisión inicial completada.',
+      EN_ESPERA_REPUESTO: 'Tecnico inicio el mantenimiento del equipo.',
+      DIAGNOSTICO: 'Revision inicial completada.',
       PENDIENTE: 'Orden de mantenimiento recibida en el sistema.',
     },
-    successMessage: '¡El mantenimiento fue completado! Puedes pasar a recoger tu equipo.',
-    statusBadgeReady: '✅ Mantenimiento completado',
+    successMessage: 'El mantenimiento fue completado. Puedes pasar a recoger tu equipo.',
+    statusBadgeReady: 'Mantenimiento completado',
   },
   ENSAMBLE: {
     steps: [
-      { id: 'PENDIENTE', label: 'Recibido', icon: '📥' },
-      { id: 'DIAGNOSTICO', label: 'Planificación', icon: '📋' },
-      { id: 'EN_ESPERA_REPUESTO', label: 'Ensamblaje', icon: '🔩' },
-      { id: 'REPARADO', label: 'Listo', icon: '✅' },
+      { id: 'PENDIENTE', label: 'Recibido' },
+      { id: 'DIAGNOSTICO', label: 'Planificacion' },
+      { id: 'EN_ESPERA_REPUESTO', label: 'Ensamblaje' },
+      { id: 'REPARADO', label: 'Listo' },
     ],
     activityMessages: {
       REPARADO: 'Ensamblaje completado. Equipo listo para entrega.',
-      EN_ESPERA_REPUESTO: 'Técnico inició el ensamblaje del equipo.',
-      DIAGNOSTICO: 'Planificación de componentes completada.',
+      EN_ESPERA_REPUESTO: 'Tecnico inicio el ensamblaje del equipo.',
+      DIAGNOSTICO: 'Planificacion de componentes completada.',
       PENDIENTE: 'Orden de ensamble recibida en el sistema.',
     },
-    successMessage: '¡Tu equipo ha sido ensamblado! Puedes pasar a recogerlo.',
-    statusBadgeReady: '✅ Ensamble completado',
+    successMessage: 'Tu equipo ha sido ensamblado. Puedes pasar a recogerlo.',
+    statusBadgeReady: 'Ensamble completado',
   },
 };
 
@@ -94,6 +94,7 @@ const getActivityEntries = (order, config) => {
 };
 
 const PublicTracking = () => {
+  const [searchParams] = useSearchParams();
   const [trackingCode, setTrackingCode] = useState('');
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -101,6 +102,24 @@ const PublicTracking = () => {
 
   const { isAuthenticated, isCliente } = useAuth();
   const isEmbedded = isAuthenticated && isCliente;
+
+  // Auto-buscar si viene un codigo en la URL (?code=TF-XXXXX)
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code');
+    if (codeFromUrl) {
+      setTrackingCode(codeFromUrl.toUpperCase());
+      // Buscar automaticamente
+      setIsLoading(true);
+      setSearched(true);
+      orderService.getByTracking(codeFromUrl.trim())
+        .then(response => setOrder(response.data))
+        .catch(() => {
+          setOrder(null);
+          toast.error('Orden no encontrada');
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [searchParams]);
 
   const searchOrder = async (e) => {
     e?.preventDefault();
@@ -199,7 +218,7 @@ const PublicTracking = () => {
                 : 'bg-sky-100 text-sky-700'
             }`}>
               {order.status === 'REPARADO' ? config.statusBadgeReady :
-               order.status === 'ENTREGADO' ? '📦 Entregado' : '🔄 En Proceso'}
+               order.status === 'ENTREGADO' ? 'Entregado' : 'En Proceso'}
             </span>
           </div>
 
@@ -230,7 +249,9 @@ const PublicTracking = () => {
                       ${isCurrent ? 'ring-4 ring-sky-200 scale-110' : ''}
                     `}>
                       {isCompleted ? (
-                        <span className="text-lg">{step.icon}</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
                       ) : (
                         <span className="font-semibold">{index + 1}</span>
                       )}
@@ -272,7 +293,9 @@ const PublicTracking = () => {
           {order.status === 'REPARADO' && (
             <div className="mt-6 p-4 bg-sky-50 border border-sky-200 rounded-xl">
               <p className="text-sky-700 font-medium text-center flex items-center justify-center gap-2">
-                <span className="text-2xl">🎉</span>
+                <svg className="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 {config.successMessage}
               </p>
             </div>

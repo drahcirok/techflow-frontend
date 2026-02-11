@@ -27,10 +27,9 @@ export const fileService = {
     if (!imageUrl) return null;
     // Si ya es una URL completa, retornarla tal cual
     if (imageUrl.startsWith('http')) return imageUrl;
-    // Si es una ruta relativa, agregar la URL del backend
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-    const fullUrl = baseUrl + imageUrl;
-    console.log('🖼️ Construyendo URL de imagen:', { imageUrl, baseUrl, fullUrl });
-    return fullUrl;
+    // Obtener la URL base del backend SIN el /api
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+    const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+    return baseUrl + imageUrl;
   }
 };

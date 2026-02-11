@@ -12,4 +12,10 @@ export const userService = {
 
   // GET /users/clients - Listar clientes (para técnicos al crear órdenes)
   getClients: () => api.get('/users/clients'),
+
+  // PUT /users/:id - Editar usuario (admin)
+  updateUser: (id, data) => api.put(`/users/${id}`, data),
+
+  // GET /users/technician-ratings - Promedio de valoracion por tecnico
+  getTechnicianRatings: () => api.get('/users/technician-ratings'),
 };
