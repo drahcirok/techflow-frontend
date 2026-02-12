@@ -21,7 +21,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     const redirectPath = {
       ADMIN: '/admin/dashboard',
       TECNICO: '/tecnico/dashboard',
-      CLIENTE: '/cliente/tracking',
+      CLIENTE: '/cliente/dashboard',
     };
     return <Navigate to={redirectPath[user.role] || '/login'} replace />;
   }
